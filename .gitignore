@@ -1,0 +1,23 @@
+# Docker volumes
+mysql_data/
+
+# Uploaded files
+uploads/
+assets/images/products/*
+!assets/images/products/.gitkeep
+
+# Environment files
+.env
+
+# IDE files
+.idea/
+.vscode/
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Temporary files
+*.log
+*.tmp
+*.swp 
