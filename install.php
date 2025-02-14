@@ -7,11 +7,11 @@ ini_set('display_errors', 1);
 set_time_limit(300); // Set to 5 minutes
 ini_set('max_execution_time', 300);
 
-// Database connection details
-$host = 'localhost:3306';
-$db   = 'zeroweb1_namo';
-$user = 'zeroweb1_namo';
-$pass = 'namopass';
+// Get environment variables or use defaults
+$host = getenv('DB_HOST') ?: 'db';
+$db   = getenv('DB_DATABASE') ?: 'zeroweb1_namo';
+$user = getenv('DB_USERNAME') ?: 'zeroweb1_namo';
+$pass = getenv('DB_PASSWORD') ?: 'namopass';
 $charset = 'utf8mb4';
 
 // Connection string
@@ -29,12 +29,27 @@ try {
     flush();
     ob_flush();
 
-    // Create connection
+    // Create connection with retry logic
     echo "Attempting to connect to database server...<br>";
     flush();
     ob_flush();
     
-    $pdo = new PDO($dsn, $user, $pass, $options);
+    $maxTries = 10;
+    $tries = 0;
+    $sleepTime = 3; // seconds
+
+    while ($tries < $maxTries) {
+        try {
+            $pdo = new PDO($dsn, $user, $pass, $options);
+            break;
+        } catch (PDOException $e) {
+            $tries++;
+            if ($tries === $maxTries) {
+                throw new PDOException("Database connection failed after $maxTries attempts: " . $e->getMessage());
+            }
+            sleep($sleepTime);
+        }
+    }
     
     // Create database if not exists
     echo "Creating database if it doesn't exist...<br>";

@@ -7,7 +7,8 @@ RUN apt-get update && apt-get install -y \
     libfreetype6-dev \
     zip \
     unzip \
-    git
+    git \
+    curl
 
 # Clear cache
 RUN apt-get clean && rm -rf /var/lib/apt/lists/*
@@ -18,6 +19,11 @@ RUN docker-php-ext-install pdo pdo_mysql gd
 
 # Enable Apache modules
 RUN a2enmod rewrite
+RUN a2enmod headers
+
+# Configure PHP
+RUN mv "$PHP_INI_DIR/php.ini-production" "$PHP_INI_DIR/php.ini"
+COPY docker/php/custom.ini /usr/local/etc/php/conf.d/custom.ini
 
 # Set working directory
 WORKDIR /var/www/html
@@ -31,6 +37,7 @@ RUN chown -R www-data:www-data /var/www/html \
     && chmod -R 777 /var/www/html/assets/images/products
 
 # Configure Apache
+COPY docker/apache/000-default.conf /etc/apache2/sites-available/000-default.conf
 RUN echo "ServerName localhost" >> /etc/apache2/apache2.conf
 
 # Expose port 80

@@ -3,15 +3,15 @@
 error_reporting(E_ALL);
 ini_set('display_errors', 1);
 
-// Database connection details
-$host = 'localhost:3306';
-$db   = 'zeroweb1_namo';
-$user = 'zeroweb1_namo';
-$pass = 'namopass';
+// Get environment variables or use defaults
+$host = getenv('DB_HOST') ?: 'db';
+$db   = getenv('DB_DATABASE') ?: 'zeroweb1_namo';
+$user = getenv('DB_USERNAME') ?: 'zeroweb1_namo';
+$pass = getenv('DB_PASSWORD') ?: 'namopass';
 $charset = 'utf8mb4';
 
 try {
-    // Create connection
+    // Create connection with retry logic
     $dsn = "mysql:host=$host;dbname=$db;charset=$charset";
     $options = [
         PDO::ATTR_ERRMODE            => PDO::ERRMODE_EXCEPTION,
@@ -19,7 +19,22 @@ try {
         PDO::ATTR_EMULATE_PREPARES   => false,
     ];
     
-    $pdo = new PDO($dsn, $user, $pass, $options);
+    $maxTries = 10;
+    $tries = 0;
+    $sleepTime = 3; // seconds
+
+    while ($tries < $maxTries) {
+        try {
+            $pdo = new PDO($dsn, $user, $pass, $options);
+            break;
+        } catch (PDOException $e) {
+            $tries++;
+            if ($tries === $maxTries) {
+                throw new PDOException("Database connection failed after $maxTries attempts: " . $e->getMessage());
+            }
+            sleep($sleepTime);
+        }
+    }
     
     // First, let's update our categories to be more specific
     $categories = [
